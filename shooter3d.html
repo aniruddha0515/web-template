@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>3D Shooting Gallery</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+
+  <!-- Load Babylon.js from CDN -->
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const engine = new BABYLON.Engine(canvas, true);
+
+    const createScene = () => {
+      const scene = new BABYLON.Scene(engine);
+
+      // Camera
+      const camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 1.5, -5), scene);
+      camera.setTarget(BABYLON.Vector3.Zero());
+      camera.attachControl(canvas, true);
+
+      // Light
+      const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0, 1, 0), scene);
+
+      // Ground
+      const ground = BABYLON.MeshBuilder.CreateGround("ground", {width: 10, height: 10}, scene);
+
+      // Create a red target
+      function spawnTarget() {
+        const target = BABYLON.MeshBuilder.CreateSphere("target", {diameter: 1}, scene);
+        target.position = new BABYLON.Vector3(
+          (Math.random() - 0.5) * 6,
+          1,
+          (Math.random() * 5 + 2)
+        );
+        const mat = new BABYLON.StandardMaterial("mat", scene);
+        mat.diffuseColor = BABYLON.Color3.Red();
+        target.material = mat;
+
+        target.actionManager = new BABYLON.ActionManager(scene);
+        target.actionManager.registerAction(
+          new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, () => {
+            target.dispose();
+            spawnTarget(); // Spawn another
+          })
+        );
+      }
+
+      // Shoot on click
+      scene.onPointerObservable.add((pointerInfo) => {
+        if (pointerInfo.type === BABYLON.PointerEventTypes.POINTERPICK) {
+          // Picking handled by actionManager on target
+        }
+      });
+
+      // Start with 1 target
+      spawnTarget();
+
+      return scene;
+    };
+
+    const scene = createScene();
+    engine.runRenderLoop(() => scene.render());
+
+    window.addEventListener("resize", () => {
+      engine.resize();
+    });
+  </script>
+</body>
+</html>
